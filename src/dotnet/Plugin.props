@@ -6,15 +6,15 @@
     <SdkVersion>2025.1.0</SdkVersion>
 
     <Title>AlphabetizeIt</Title>
-    <Description>Description</Description>
+    <Description>A plugin for Resharper/Rider to alphabetize the properties of model files and object initializers.</Description>
 
-    <Authors>Author</Authors>
+    <Authors>Jessie Alastor</Authors>
     <Copyright>Copyright $([System.DateTime]::Now.Year) Maintainers of AlphabetizeIt</Copyright>
-    <PackageTags>resharper plugin</PackageTags>
+    <PackageTags>resharper rider plugin</PackageTags>
 
-    <PackageProjectUrl></PackageProjectUrl>
-    <PackageLicenseUrl></PackageLicenseUrl>
-    <PackageIconUrl></PackageIconUrl>
+    <PackageProjectUrl>https://github.com/ZXeno/Resharper-Rider.AlphabetizeIt</PackageProjectUrl>
+    <PackageLicenseUrl>https://github.com/ZXeno/Resharper-Rider.AlphabetizeIt/blob/main/LICENSE</PackageLicenseUrl>
+    <PackageIconUrl>https://github.com/ZXeno/Resharper-Rider.AlphabetizeIt/blob/main/logo.png</PackageIconUrl>
   </PropertyGroup>
 
 </Project>
