@@ -13,8 +13,6 @@ namespace ReSharperPlugin.AlphabetizeIt.Actions;
 
 public abstract class AbitActionBase : BulbActionBase
 {
-    public override string Text { get; }
-
     protected override Action<ITextControl> ExecutePsiTransaction(ISolution solution, IProgressIndicator progress)
     {
         return delegate(ITextControl textControl)

@@ -22,7 +22,7 @@ public sealed class SortPropertiesContextAction : IContextAction
     public IEnumerable<IntentionAction> CreateBulbItems()
     {
         // Create a bulb action with text that will appear in the menu
-        List<IBulbAction> bulbItems = new() { };
+        List<IBulbAction> bulbItems = [];
         if (_dataProvider.GetSelectedElement<IClassDeclaration>() != null)
         {
             bulbItems.Add(new SortClassPropertiesAction(_dataProvider));
