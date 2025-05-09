@@ -1,0 +1,15 @@
+<idea-plugin require-restart="true">
+  <id>com.jetbrains.rider.plugins.alphabetizeit</id>
+  <name>AlphabetizeIt</name>
+  <version>0.1</version>
+  <vendor url="https://github.com/zxeno">Jessie Alastor</vendor>
+  <idea-version since-build="2025.1.1" until-build="*" />
+  <depends>com.intellij.modules.rider</depends>
+
+  <description>
+<![CDATA[
+<p>Sort the properties of your C# classes alphabetically for easier readability!</p>
+]]>
+  </description>
+
+</idea-plugin>
