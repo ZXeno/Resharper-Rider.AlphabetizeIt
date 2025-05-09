@@ -25,37 +25,20 @@ using JetBrains.ReSharper.Psi.Util;
 using JetBrains.ReSharper.Resources.Shell;
 
 
-namespace ReSharperPlugin.AlphabetizeIt;
+namespace ReSharperPlugin.AlphabetizeIt.Actions;
 
-public sealed class SortPropertiesAction : BulbActionBase
+public sealed class SortClassPropertiesAction : AbitActionBase
 {
     private readonly IClassDeclaration _classDeclaration;
 
-    public SortPropertiesAction(ICSharpContextActionDataProvider provider)
+    public SortClassPropertiesAction(ICSharpContextActionDataProvider provider)
     {
         _classDeclaration = provider.GetSelectedElement<IClassDeclaration>();
     }
 
-    public override string Text => "Sort properties alphabetically";
+    public override string Text => "Sort class properties alphabetically";
 
-    protected override Action<ITextControl> ExecutePsiTransaction(ISolution solution, IProgressIndicator progress)
-    {
-        return delegate(ITextControl textControl)
-        {
-            solution.GetComponent<IDocumentStorageHelpers>().SaveAllDocuments();
-
-            using ITransactionCookie transactionCookie =
-                solution.GetComponent<DocumentTransactionManager>()
-                    .CreateTransactionCookie(DefaultAction.Commit, "action name");
-
-            IPsiServices services = solution.GetPsiServices();
-            services.Transactions.Execute(
-                Text,
-                () => services.Locks.ExecuteWithWriteLock(() => { ExecuteTransactionInner(solution, textControl); }));
-        };
-    }
-
-    private void ExecuteTransactionInner(ISolution solution, ITextControl textControl)
+    protected override void ExecuteAction(ISolution solution, ITextControl textControl)
     {
         IList<IPropertyDeclaration> properties =
             _classDeclaration.MemberDeclarations
