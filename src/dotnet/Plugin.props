@@ -6,7 +6,7 @@
     <SdkVersion>2025.1.0</SdkVersion>
 
     <Title>AlphabetizeIt</Title>
-    <Description>A plugin for Resharper/Rider to alphabetize the properties of model files and object initializers.</Description>
+    <Description>Sort the properties of your C# classes and object initializers alphabetically for easier readability! Sorts your model class properties and your object initializers alphabetically.</Description>
 
     <Authors>Jessie Alastor</Authors>
     <Copyright>Copyright $([System.DateTime]::Now.Year) Maintainers of AlphabetizeIt</Copyright>
