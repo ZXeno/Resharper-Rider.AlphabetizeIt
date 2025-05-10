@@ -22,15 +22,18 @@ public sealed class SortPropertiesContextAction : IContextAction
     public IEnumerable<IntentionAction> CreateBulbItems()
     {
         // Create a bulb action with text that will appear in the menu
+        bool isObjInitializer = _dataProvider.GetSelectedElement<IObjectInitializer>() != null;
+        bool isClass = _dataProvider.GetSelectedElement<IClassDeclaration>() != null;
         List<IBulbAction> bulbItems = [];
-        if (_dataProvider.GetSelectedElement<IClassDeclaration>() != null)
-        {
-            bulbItems.Add(new SortClassPropertiesAction(_dataProvider));
-        }
 
-        if (_dataProvider.GetSelectedElement<IObjectInitializer>() != null)
+        if (isObjInitializer)
         {
             bulbItems.Add(new SortObjectInitializerPropertiesAction(_dataProvider));
+        }
+
+        if (!isObjInitializer && isClass)
+        {
+            bulbItems.Add(new SortClassPropertiesAction(_dataProvider));
         }
 
         return bulbItems.ToContextActionIntentions();
