@@ -372,7 +372,6 @@ MigrationBackup/
 # Resharper Plugin Repo Additions
 *.bin
 *.exe
-.gradle
 .tmp
 build/
 .intellijPlatform

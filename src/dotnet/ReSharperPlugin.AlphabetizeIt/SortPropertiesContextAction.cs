@@ -22,16 +22,18 @@ public sealed class SortPropertiesContextAction : IContextAction
     public IEnumerable<IntentionAction> CreateBulbItems()
     {
         // Create a bulb action with text that will appear in the menu
-        bool isObjInitializer = _dataProvider.GetSelectedElement<IObjectInitializer>() != null;
-        bool isClass = _dataProvider.GetSelectedElement<IClassDeclaration>() != null;
+        IObjectInitializer objInitializer = _dataProvider.GetSelectedElement<IObjectInitializer>();
+        IClassDeclaration classDec = _dataProvider.GetSelectedElement<IClassDeclaration>();
+        bool isObjInitializer = objInitializer != null;
+        bool isClass = classDec != null;
         List<IBulbAction> bulbItems = [];
 
-        if (isObjInitializer)
+        if (isObjInitializer && objInitializer.MemberInitializers.Count > 1)
         {
             bulbItems.Add(new SortObjectInitializerPropertiesAction(_dataProvider));
         }
 
-        if (!isObjInitializer && isClass)
+        if (!isObjInitializer && isClass && classDec.PropertyDeclarations.Count > 1)
         {
             bulbItems.Add(new SortClassPropertiesAction(_dataProvider));
         }
@@ -41,7 +43,10 @@ public sealed class SortPropertiesContextAction : IContextAction
 
     public bool IsAvailable(IUserDataHolder cache)
     {
-        return _dataProvider.GetSelectedElement<IClassDeclaration>() != null
-            || _dataProvider.GetSelectedElement<IObjectInitializer>() != null;
+        IObjectInitializer objInitializer = _dataProvider.GetSelectedElement<IObjectInitializer>();
+        IClassDeclaration classDec = _dataProvider.GetSelectedElement<IClassDeclaration>();
+
+        return (classDec != null && classDec.PropertyDeclarations.Count > 1)
+               || (objInitializer != null && objInitializer.MemberInitializers.Count > 1);
     }
 }
