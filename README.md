@@ -1,7 +1,7 @@
 # AlphabetizeIt for Rider and ReSharper
 
-[![Rider](https://img.shields.io/jetbrains/plugin/v/ReSharperPlugin.AlphabetizeIt.svg?label=Rider&colorB=0A7BBB&style=for-the-badge&logo=rider)](https://plugins.jetbrains.com/plugin/ReSharperPlugin.AlphabetizeIt)
-[![ReSharper](https://img.shields.io/jetbrains/plugin/v/ReSharperPlugin.AlphabetizeIt.svg?label=ReSharper&colorB=0A7BBB&style=for-the-badge&logo=resharper)](https://plugins.jetbrains.com/plugin/ReSharperPlugin.AlphabetizeIt)
+[![Rider](https://img.shields.io/jetbrains/plugin/v/27340-alphabetizeit.svg?label=Rider&colorB=0A7BBB&style=for-the-badge&logo=rider)](https://plugins.jetbrains.com/plugin/27340-alphabetizeit)
+[![ReSharper](https://img.shields.io/jetbrains/plugin/v/27322-alphabetizeit.svg?label=ReSharper&colorB=0A7BBB&style=for-the-badge&logo=resharper)](https://plugins.jetbrains.com/plugin/27322-alphabetizeit)
 
 AlphabetizeIt! is a plugin for Resharper and Rider that will sort the properties of a class or object initializer in alphabetical order.
 
