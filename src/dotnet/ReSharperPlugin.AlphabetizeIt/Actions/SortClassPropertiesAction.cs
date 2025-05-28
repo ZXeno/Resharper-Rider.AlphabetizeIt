@@ -51,6 +51,25 @@ public sealed class SortClassPropertiesAction : AbitActionBase
             return;
         }
 
+        // create accessor sorting, we'll use the `NodeType` ToString() values for keys
+        Dictionary<string, IList<IPropertyDeclaration>> sortedProps = new()
+        {
+            {"PUBLIC_KEYWORD", new List<IPropertyDeclaration>()},
+            {"INTERNAL_KEYWORD", new List<IPropertyDeclaration>()},
+            {"PROTECTED_KEYWORD INTERNAL_KEYWORD", new List<IPropertyDeclaration>()},
+            {"PROTECTED_KEYWORD", new List<IPropertyDeclaration>()},
+            {"PRIVATE_KEYWORD", new List<IPropertyDeclaration>()},
+        };
+
+        foreach (IPropertyDeclaration property in properties)
+        {
+            string accessorKey = string.Join(" ", property.ModifiersList.ModifiersEnumerable.Select(x => x.NodeType));
+            if (!sortedProps.TryAdd(accessorKey, new List<IPropertyDeclaration> { property }))
+            {
+                sortedProps[accessorKey].Add(property);
+            }
+        }
+
         // Get the class body where properties are located
         IClassBody classBody = _classDeclaration.Body;
         if (classBody == null)
@@ -78,25 +97,35 @@ public sealed class SortClassPropertiesAction : AbitActionBase
             ? _classDeclaration.MethodDeclarations[0]
             : anchor;
 
-        foreach (IPropertyDeclaration prop in properties)
+        bool isPropAnchor = false;
+
+        // Nested loops are ugly, but we have a fixed number of accessors. This
+        // should be fine perf-wise for the expected size of the `props` object.
+        foreach (string accessor in sortedProps.Keys)
         {
-            IPropertyDeclaration newprop =
-                (IPropertyDeclaration)factory.CreateTypeMemberDeclaration(prop.GetText());
-
-            if (hasConstructors)
+            foreach (IPropertyDeclaration prop in sortedProps[accessor])
             {
-                IPropertyDeclaration addedProp = ModificationUtil.AddChildAfter(anchor, newprop);
-                anchor = addedProp;
-                continue;
-            }
+                IPropertyDeclaration newprop =
+                    (IPropertyDeclaration)factory.CreateTypeMemberDeclaration(prop.GetText());
 
-            if (hasMethods)
-            {
-                ModificationUtil.AddChildBefore(anchor, newprop);
-                continue;
-            }
+                if (isPropAnchor || hasConstructors)
+                {
+                    IPropertyDeclaration addedProp = ModificationUtil.AddChildAfter(anchor, newprop);
+                    anchor = addedProp;
+                    isPropAnchor = true;
+                    continue;
+                }
 
-            _classDeclaration.AddClassMemberDeclaration(newprop);
+                if (hasMethods)
+                {
+                    IPropertyDeclaration addedProp = ModificationUtil.AddChildBefore(anchor, newprop);
+                    anchor = addedProp;
+                    isPropAnchor = true;
+                    continue;
+                }
+
+                _classDeclaration.AddClassMemberDeclaration(newprop);
+            }
         }
 
         classBody.FormatNode();
