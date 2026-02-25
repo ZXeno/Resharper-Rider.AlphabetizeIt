@@ -1,39 +1,28 @@
-using JetBrains.Application.Progress;
 using JetBrains.ProjectModel;
-using JetBrains.ReSharper.Feature.Services.Bulbs;
-using JetBrains.ReSharper.Psi;
-using JetBrains.ReSharper.Psi.CSharp.Tree;
-using JetBrains.ReSharper.Psi.Tree;
-using JetBrains.TextControl;
-using JetBrains.Util;
-using System;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.Linq;
-using JetBrains.Application.Threading;
-using JetBrains.DocumentModel;
-using JetBrains.DocumentModel.Storage;
-using JetBrains.DocumentModel.Transactions;
 using JetBrains.ReSharper.Feature.Services.CSharp.ContextActions;
-using JetBrains.ReSharper.Feature.Services.Intentions;
 using JetBrains.ReSharper.Psi.CodeStyle;
 using JetBrains.ReSharper.Psi.CSharp;
+using JetBrains.ReSharper.Psi.CSharp.Tree;
 using JetBrains.ReSharper.Psi.ExtensionsAPI.Tree;
-using JetBrains.ReSharper.Psi.Files;
-using JetBrains.ReSharper.Psi.Search;
-using JetBrains.ReSharper.Psi.Util;
+using JetBrains.ReSharper.Psi.Tree;
 using JetBrains.ReSharper.Resources.Shell;
-
+using JetBrains.TextControl;
+using ReSharperPlugin.AlphabetizeIt.Models;
+using ReSharperPlugin.AlphabetizeIt.Utils;
+using System.Collections.Generic;
+using System.Linq;
 
 namespace ReSharperPlugin.AlphabetizeIt.Actions;
 
 public sealed class SortClassPropertiesAction : AbitActionBase
 {
     private readonly IClassDeclaration _classDeclaration;
+    private readonly ICSharpContextActionDataProvider _contextProvider;
 
     public SortClassPropertiesAction(ICSharpContextActionDataProvider provider)
     {
         _classDeclaration = provider.GetSelectedElement<IClassDeclaration>();
+        _contextProvider = provider;
     }
 
     public override string Text => "Sort class properties alphabetically";
@@ -46,24 +35,37 @@ public sealed class SortClassPropertiesAction : AbitActionBase
                 .OrderBy(p => p.DeclaredName)
                 .ToList();
 
+        List<CsharpRegion> regions = _contextProvider.PsiFile.GetAllRegions();
+
         if (properties.Count <= 1)
         {
             return;
         }
 
-        // create accessor sorting, we'll use the `NodeType` ToString() values for keys
-        Dictionary<string, IList<IPropertyDeclaration>> sortedProps = new()
-        {
-            {"PUBLIC_KEYWORD", new List<IPropertyDeclaration>()},
-            {"INTERNAL_KEYWORD", new List<IPropertyDeclaration>()},
-            {"PROTECTED_KEYWORD INTERNAL_KEYWORD", new List<IPropertyDeclaration>()},
-            {"PROTECTED_KEYWORD", new List<IPropertyDeclaration>()},
-            {"PRIVATE_KEYWORD", new List<IPropertyDeclaration>()},
-        };
-
+        bool propInRegion = false;
+        Dictionary<string, IList<IPropertyDeclaration>> sortedProps = AbitHelper.CreateAccessorSorted<IPropertyDeclaration>();
         foreach (IPropertyDeclaration property in properties)
         {
             string accessorKey = string.Join(" ", property.ModifiersList.ModifiersEnumerable.Select(x => x.NodeType));
+
+            // check if the property is contained in a region. If it is,
+            // store that in the region's sorted props
+            foreach (CsharpRegion region in regions)
+            {
+                if (region.ContainsOffset(property.GetTreeStartOffset()))
+                {
+                    region.TryAddSortedProperty(accessorKey, property);
+                    propInRegion = true;
+                    break;
+                }
+            }
+
+            if (propInRegion)
+            {
+                propInRegion = false;
+                continue;
+            }
+
             if (!sortedProps.TryAdd(accessorKey, new List<IPropertyDeclaration> { property }))
             {
                 sortedProps[accessorKey].Add(property);
@@ -93,12 +95,11 @@ public sealed class SortClassPropertiesAction : AbitActionBase
             ? _classDeclaration.ConstructorDeclarations.Last()
             : classBody;
 
-        anchor = !hasConstructors && hasMethods
+        anchor = !hasConstructors && hasMethods && !RegionsContainNode(regions, _classDeclaration.MethodDeclarations[0])
             ? _classDeclaration.MethodDeclarations[0]
             : anchor;
 
         bool isPropAnchor = false;
-
         // Nested loops are ugly, but we have a fixed number of accessors. This
         // should be fine perf-wise for the expected size of the `props` object.
         foreach (string accessor in sortedProps.Keys)
@@ -128,6 +129,37 @@ public sealed class SortClassPropertiesAction : AbitActionBase
             }
         }
 
+        // add sorted region props
+        // stars in the f*king sky, this is as dumb as possible.
+        foreach (CsharpRegion region in regions)
+        {
+            anchor = region.Start;
+            foreach (string accessor in region.SortedProperties.Keys)
+            {
+                foreach (IPropertyDeclaration prop in region.SortedProperties[accessor])
+                {
+                    IPropertyDeclaration newprop =
+                        (IPropertyDeclaration)factory.CreateTypeMemberDeclaration(prop.GetText());
+
+                    IPropertyDeclaration addedProp = ModificationUtil.AddChildAfter(anchor, newprop);
+                    anchor = addedProp;
+                }
+            }
+        }
+
         classBody.FormatNode();
+    }
+
+    private bool RegionsContainNode(List<CsharpRegion> regions, ITreeNode node)
+    {
+        foreach (CsharpRegion region in regions)
+        {
+            if (region.ContainsOffset(_classDeclaration.MethodDeclarations[0].GetTreeStartOffset()))
+            {
+                return true;
+            }
+        }
+
+        return false;
     }
 }
