@@ -24,8 +24,10 @@ public sealed class SortContextAction : IContextAction
         // Create a bulb action with text that will appear in the menu
         IObjectInitializer objInitializer = _dataProvider.GetSelectedElement<IObjectInitializer>();
         IClassDeclaration classDec = _dataProvider.GetSelectedElement<IClassDeclaration>();
+        IInterfaceDeclaration iDec = _dataProvider.GetSelectedElement<IInterfaceDeclaration>();
         bool isObjInitializer = objInitializer != null;
         bool isClass = classDec != null;
+        bool isInterface = iDec != null;
         List<IBulbAction> bulbItems = [];
 
         if (isObjInitializer && objInitializer.MemberInitializers.Count > 1)
@@ -43,6 +45,16 @@ public sealed class SortContextAction : IContextAction
             bulbItems.Add(new SortClassMethodsAction(_dataProvider));
         }
 
+        if (!isObjInitializer && isInterface && iDec.PropertyDeclarations.Count > 1)
+        {
+            bulbItems.Add(new SortInterfacePropertiesAction(_dataProvider));
+        }
+
+        if (!isObjInitializer && isInterface && iDec.MethodDeclarations.Count > 1)
+        {
+            bulbItems.Add(new SortInterfaceMethodsAction(_dataProvider));
+        }
+
         return bulbItems.ToContextActionIntentions();
     }
 
@@ -50,8 +62,10 @@ public sealed class SortContextAction : IContextAction
     {
         IObjectInitializer objInitializer = _dataProvider.GetSelectedElement<IObjectInitializer>();
         IClassDeclaration classDec = _dataProvider.GetSelectedElement<IClassDeclaration>();
+        IInterfaceDeclaration iDec = _dataProvider.GetSelectedElement<IInterfaceDeclaration>();
 
-        return (classDec != null && classDec.PropertyDeclarations.Count > 1)
+        return (classDec != null && (classDec.PropertyDeclarations.Count > 1 || classDec.MethodDeclarations.Count > 1))
+               || (iDec != null && (iDec.PropertyDeclarations.Count > 1 || iDec.MethodDeclarations.Count > 1))
                || (objInitializer != null && objInitializer.MemberInitializers.Count > 1);
     }
 }

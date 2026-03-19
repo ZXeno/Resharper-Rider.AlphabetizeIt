@@ -4,6 +4,12 @@ namespace ReSharperPlugin.AlphabetizeIt.Utils;
 
 public static class AbitHelper
 {
+    public const string PublicKeyword = "PUBLIC_KEYWORD";
+    public const string InternalKeyword = "INTERNAL_KEYWORD";
+    public const string ProtectedInternalKeyword = "PROTECTED_KEYWORD INTERNAL_KEYWORD";
+    public const string ProtectedKeyword = "PROTECTED_KEYWORD";
+    public const string PrivateKeyword = "PRIVATE_KEYWORD";
+
     /// <summary>
     /// Create accessor sorting, we'll use the `NodeType` ToString() values for keys
     /// </summary>
