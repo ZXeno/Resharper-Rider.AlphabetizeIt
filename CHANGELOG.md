@@ -2,6 +2,7 @@
 
 ## 0.1.4
 - Sorting contexts now respects regions
+- Support for sorting methods added.
 
 ## 0.1.3
 - Sort Properties now organizes by modifier first in the following order: public, internal, protected internal, protected, private

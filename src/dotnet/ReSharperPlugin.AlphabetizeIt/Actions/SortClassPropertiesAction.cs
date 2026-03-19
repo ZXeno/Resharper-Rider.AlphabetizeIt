@@ -1,4 +1,3 @@
-using JetBrains.DocumentModel;
 using JetBrains.ProjectModel;
 using JetBrains.ReSharper.Feature.Services.CSharp.ContextActions;
 using JetBrains.ReSharper.Psi.CodeStyle;
@@ -92,11 +91,11 @@ public sealed class SortClassPropertiesAction : AbitActionBase
         // Add the properties back in the sorted order after the last constructor and before methods.
         bool hasConstructors = _classDeclaration.ConstructorDeclarations.Count > 0;
         bool hasMethods = _classDeclaration.MethodDeclarations.Count > 0;
-        ITreeNode anchor = hasConstructors && !RegionsContainNode(regions, _classDeclaration.ConstructorDeclarations.Last())
+        ITreeNode anchor = hasConstructors && !regions.ContainsNode(_classDeclaration.ConstructorDeclarations.Last())
             ? _classDeclaration.ConstructorDeclarations.Last()
             : classBody;
 
-        anchor = !hasConstructors && hasMethods && !RegionsContainNode(regions, _classDeclaration.MethodDeclarations[0])
+        anchor = !hasConstructors && hasMethods && !regions.ContainsNode(_classDeclaration.MethodDeclarations[0])
             ? _classDeclaration.MethodDeclarations[0]
             : anchor;
 
@@ -183,18 +182,5 @@ public sealed class SortClassPropertiesAction : AbitActionBase
         }
 
         classBody.FormatNode();
-    }
-
-    private bool RegionsContainNode(List<CsharpRegion> regions, ITreeNode node)
-    {
-        foreach (CsharpRegion region in regions)
-        {
-            if (region.ContainsOffset(_classDeclaration.MethodDeclarations[0].GetTreeStartOffset()))
-            {
-                return true;
-            }
-        }
-
-        return false;
     }
 }
