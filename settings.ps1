@@ -5,7 +5,7 @@ $SourceBasePath = "$PSScriptRoot\src\dotnet"
 $VsWhereOutput = [xml] (& "$PSScriptRoot\tools\vswhere.exe" -format xml -products *)
 $VisualStudio = $VsWhereOutput.instances.instance |
     Where-Object { $_.channelId -match "Release" } |
-    Sort-Object -Property installationVersion |
+    Sort-Object -Property installationName |
     Select-Object -Last 1
 
 $VisualStudioBaseDirectory = $VisualStudio.installationPath

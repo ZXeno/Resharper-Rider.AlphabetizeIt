@@ -14,23 +14,23 @@ using System.Linq;
 
 namespace ReSharperPlugin.AlphabetizeIt.Actions;
 
-public sealed class SortClassPropertiesAction : AbitActionBase
+public sealed class SortInterfacePropertiesAction : AbitActionBase
 {
-    private readonly IClassDeclaration _classDeclaration;
+    private readonly IInterfaceDeclaration _interfaceDeclaration;
     private readonly ICSharpContextActionDataProvider _contextProvider;
 
-    public SortClassPropertiesAction(ICSharpContextActionDataProvider provider)
+    public SortInterfacePropertiesAction(ICSharpContextActionDataProvider provider)
     {
-        _classDeclaration = provider.GetSelectedElement<IClassDeclaration>();
+        _interfaceDeclaration = provider.GetSelectedElement<IInterfaceDeclaration>();
         _contextProvider = provider;
     }
 
-    public override string Text => "Sort class properties alphabetically";
+    public override string Text => "Sort interface properties alphabetically";
 
     protected override void ExecuteAction(ISolution solution, ITextControl textControl)
     {
         IList<IPropertyDeclaration> properties =
-            _classDeclaration.MemberDeclarations
+            _interfaceDeclaration.MemberDeclarations
                 .OfType<IPropertyDeclaration>()
                 .OrderBy(p => p.DeclaredName)
                 .ToList();
@@ -46,7 +46,7 @@ public sealed class SortClassPropertiesAction : AbitActionBase
         Dictionary<string, IList<IPropertyDeclaration>> sortedProps = AbitHelper.CreateAccessorSorted<IPropertyDeclaration>();
         foreach (IPropertyDeclaration property in properties)
         {
-            string accessorKey = string.Join(" ", property.ModifiersList.ModifiersEnumerable.Select(x => x.NodeType));
+            string accessorKey = string.Join(" ", property.ModifiersList?.ModifiersEnumerable.Select(x => x.NodeType) ?? []);
 
             // check if the property is contained in a region. If it is,
             // store that in the region's sorted props
@@ -73,30 +73,30 @@ public sealed class SortClassPropertiesAction : AbitActionBase
         }
 
         // Get the class body where properties are located
-        IClassBody classBody = _classDeclaration.Body;
+        IClassBody classBody = _interfaceDeclaration.Body;
         if (classBody == null)
         {
             return;
         }
 
         using WriteLockCookie cookie = WriteLockCookie.Create();
-        CSharpElementFactory factory = CSharpElementFactory.GetInstance(_classDeclaration);
+        CSharpElementFactory factory = CSharpElementFactory.GetInstance(_interfaceDeclaration);
 
         // Remove all properties
         foreach (IPropertyDeclaration prop in properties)
         {
-            _classDeclaration.RemoveClassMemberDeclaration(prop);
+            _interfaceDeclaration.RemoveClassMemberDeclaration(prop);
         }
 
         // Add the properties back in the sorted order after the last constructor and before methods.
-        bool hasConstructors = _classDeclaration.ConstructorDeclarations.Count > 0;
-        bool hasMethods = _classDeclaration.MethodDeclarations.Count > 0;
-        ITreeNode anchor = hasConstructors && !regions.ContainsNode(_classDeclaration.ConstructorDeclarations.Last())
-            ? _classDeclaration.ConstructorDeclarations.Last()
+        bool hasConstructors = _interfaceDeclaration.ConstructorDeclarations.Count > 0;
+        bool hasMethods = _interfaceDeclaration.MethodDeclarations.Count > 0;
+        ITreeNode anchor = hasConstructors && !regions.ContainsNode(_interfaceDeclaration.ConstructorDeclarations.Last())
+            ? _interfaceDeclaration.ConstructorDeclarations.Last()
             : classBody;
 
-        anchor = !hasConstructors && hasMethods && !regions.ContainsNode(_classDeclaration.MethodDeclarations[0])
-            ? _classDeclaration.MethodDeclarations[0]
+        anchor = !hasConstructors && hasMethods && !regions.ContainsNode(_interfaceDeclaration.MethodDeclarations[0])
+            ? _interfaceDeclaration.MethodDeclarations[0]
             : anchor;
 
         // set the region start anchor. We'll place properties above the first region
@@ -133,7 +133,7 @@ public sealed class SortClassPropertiesAction : AbitActionBase
                     }
                     else
                     {
-                        addedProp = _classDeclaration.AddClassMemberDeclaration(newprop);
+                        addedProp = _interfaceDeclaration.AddClassMemberDeclaration(newprop);
                     }
 
                     anchor = addedProp;
@@ -157,7 +157,7 @@ public sealed class SortClassPropertiesAction : AbitActionBase
                     continue;
                 }
 
-                addedProp = _classDeclaration.AddClassMemberDeclaration(newprop);
+                addedProp = _interfaceDeclaration.AddClassMemberDeclaration(newprop);
                 anchor = addedProp;
                 isPropAnchor = true;
             }
