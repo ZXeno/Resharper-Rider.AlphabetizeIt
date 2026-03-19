@@ -10,6 +10,12 @@ namespace ReSharperPlugin.AlphabetizeIt.Models;
 
 public sealed class CsharpRegion
 {
+    public CsharpRegion()
+    {
+        SortedProperties = AbitHelper.CreateAccessorSorted<IPropertyDeclaration>();
+        SortedMethods = AbitHelper.CreateAccessorSorted<IMethodDeclaration>();
+    }
+
     public string Name { get; init; }
     public ICSharpFile File { get; init; }
     public IPreprocessorDirective Start { get; init; }
@@ -19,11 +25,9 @@ public sealed class CsharpRegion
     public DocumentOffset EndDocOffset => End.GetDocumentEndOffset();
     public TreeOffset EndOffset => End.GetTreeEndOffset();
     public Dictionary<string, IList<IPropertyDeclaration>> SortedProperties { get; private set; }
-
-    public CsharpRegion()
-    {
-        SortedProperties = AbitHelper.CreateAccessorSorted<IPropertyDeclaration>();
-    }
+    public Dictionary<string, IList<IMethodDeclaration>> SortedMethods { get; set; }
+    public bool HasProperties => SortedProperties.Count > 0 || this.GetPropertiesInRegion().Count > 0;
+    public bool HasMethods => SortedMethods.Count > 0 || this.GetMethodsInRegion().Count > 0;
 
     public TreeTextRange Range => new TreeTextRange(StartOffset, EndOffset);
 
@@ -32,6 +36,14 @@ public sealed class CsharpRegion
         if (!SortedProperties.TryAdd(accessorKey, new List<IPropertyDeclaration> { prop }))
         {
             SortedProperties[accessorKey].Add(prop);
+        }
+    }
+
+    public void TryAddSortedMethod(string accessorKey, IMethodDeclaration prop)
+    {
+        if (!SortedMethods.TryAdd(accessorKey, new List<IMethodDeclaration> { prop }))
+        {
+            SortedMethods[accessorKey].Add(prop);
         }
     }
 
@@ -113,5 +125,11 @@ public sealed class CsharpRegion
         }
 
         return methods;
+    }
+
+    public bool ContainsNode(ITreeNode node)
+    {
+        return node.GetDocumentStartOffset() > this.StartDocOffset
+               && node.GetDocumentEndOffset() < this.EndDocOffset;
     }
 }

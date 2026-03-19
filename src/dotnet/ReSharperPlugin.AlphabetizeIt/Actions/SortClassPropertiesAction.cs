@@ -1,3 +1,4 @@
+using JetBrains.DocumentModel;
 using JetBrains.ProjectModel;
 using JetBrains.ReSharper.Feature.Services.CSharp.ContextActions;
 using JetBrains.ReSharper.Psi.CodeStyle;
@@ -91,7 +92,7 @@ public sealed class SortClassPropertiesAction : AbitActionBase
         // Add the properties back in the sorted order after the last constructor and before methods.
         bool hasConstructors = _classDeclaration.ConstructorDeclarations.Count > 0;
         bool hasMethods = _classDeclaration.MethodDeclarations.Count > 0;
-        ITreeNode anchor = hasConstructors
+        ITreeNode anchor = hasConstructors && !RegionsContainNode(regions, _classDeclaration.ConstructorDeclarations.Last())
             ? _classDeclaration.ConstructorDeclarations.Last()
             : classBody;
 
@@ -99,7 +100,20 @@ public sealed class SortClassPropertiesAction : AbitActionBase
             ? _classDeclaration.MethodDeclarations[0]
             : anchor;
 
+        // set the region start anchor. We'll place properties above the first region
+        // following a constructor in this scenario. Otherwise, we'll leave them alone.
+        bool isRegionStartAnchor = false;
+        if (regions.Count > 0)
+        {
+            if (!hasConstructors && !hasMethods)
+            {
+                isRegionStartAnchor = true;
+                anchor = regions[0].Start;
+            }
+        }
+
         bool isPropAnchor = false;
+        bool anchorIsClassBody = anchor is IClassBody;
         // Nested loops are ugly, but we have a fixed number of accessors. This
         // should be fine perf-wise for the expected size of the `props` object.
         foreach (string accessor in sortedProps.Keys)
@@ -109,28 +123,49 @@ public sealed class SortClassPropertiesAction : AbitActionBase
                 IPropertyDeclaration newprop =
                     (IPropertyDeclaration)factory.CreateTypeMemberDeclaration(prop.GetText());
 
+                IPropertyDeclaration addedProp;
+                if (anchorIsClassBody)
+                {
+                    anchorIsClassBody = false;
+                    if (regions.Count > 0)
+                    {
+                        anchor = regions[0].Start;
+                        addedProp = addedProp = ModificationUtil.AddChildBefore(anchor, newprop);
+                    }
+                    else
+                    {
+                        addedProp = _classDeclaration.AddClassMemberDeclaration(newprop);
+                    }
+
+                    anchor = addedProp;
+                    isPropAnchor = true;
+                    continue;
+                }
+
                 if (isPropAnchor || hasConstructors)
                 {
-                    IPropertyDeclaration addedProp = ModificationUtil.AddChildAfter(anchor, newprop);
+                    addedProp = ModificationUtil.AddChildAfter(anchor, newprop);
                     anchor = addedProp;
                     isPropAnchor = true;
                     continue;
                 }
 
-                if (hasMethods)
+                if (isRegionStartAnchor || hasMethods)
                 {
-                    IPropertyDeclaration addedProp = ModificationUtil.AddChildBefore(anchor, newprop);
+                    addedProp = ModificationUtil.AddChildBefore(anchor, newprop);
                     anchor = addedProp;
                     isPropAnchor = true;
                     continue;
                 }
 
-                _classDeclaration.AddClassMemberDeclaration(newprop);
+                addedProp = _classDeclaration.AddClassMemberDeclaration(newprop);
+                anchor = addedProp;
+                isPropAnchor = true;
             }
         }
 
         // add sorted region props
-        // stars in the f*king sky, this is as dumb as possible.
+        // stars in the f*king sky, this is so many nested loops.
         foreach (CsharpRegion region in regions)
         {
             anchor = region.Start;
